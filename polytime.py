@@ -2,6 +2,7 @@ import datetime
 import time
 import argparse
 import re
+import json
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--sleeps', nargs='+',
@@ -9,10 +10,24 @@ parser.add_argument('--sleeps', nargs='+',
 parser.add_argument('-dm', '--dateMultiplier', action='store_true', help="This replaces the days in the date with the number of arcs since the start of the month.")
 args = parser.parse_args()
 
+def loadConfig():
+    try:
+        with open('config') as f:
+            read_data = f.read()
+            print(read_data)
+    except FileNotFoundError:
+        print("Oops")
+        return 0
+
 # configurator for user input
 def configurator():
     sleeps = []
-    pattern = re.compile("\d{2}:\d{2}-\d{2}:\d{2}")
+    pattern = re.compile("^\d{2}:\d{2}-\d{2}:\d{2}$")
+    conf = loadConfig()
+    if conf == 0:
+        conf = json.loads('{"sleeps": [{"name": "", "start": 0, "end": 0}], "dateMultiplier": 0}')
+
+    print(json.dumps(conf, indent=4))
 
     if args.sleeps is not None:
         nameCache = ''
@@ -29,10 +44,12 @@ def configurator():
                 continue
 
             nameCache = args.sleeps[i]
-        printTime(sleepTimes(sleeps))
+        args.sleeps = sleepTimes(sleeps)
     else:
-        printTime([['', 0, 0]])
-        sleeps = ['', ['00:00-00:00']]
+        args.sleeps = ([['', 0, 0]])
+
+    print(conf)
+    #printTime(conf)
 
 # conversion of sleep times to second based values and sorting
 def sleepTimes(input):
@@ -80,4 +97,5 @@ def printTime(sleepsIn):
 
     print('{0}-{1:02d}-{2} | {3:02d}:{4:02d}:{5:02d} {6}'.format(time.year, time.month, dateDays, time.hour, time.minute, dateSeconds, sleepsIn[currentArc][0]))
 
-configurator()
+if args.sleeps is not None:
+    configurator()
