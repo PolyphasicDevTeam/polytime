@@ -1,5 +1,5 @@
 # polytime
-Polytime is an alternative clock that's based around multiple sleeps a day, by splitting the day into multiple ***arcs*** that start and end based on sleep times. At the start of each arc the time is 00:00:00.
+An alternative clock which splits the day into segments (each starting with a time of 00:00:00) based on one or more sleep times. 
 
  ```
  monika@archlinux> python polytime.py                                                                               ~/polytime
