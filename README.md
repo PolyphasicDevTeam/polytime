@@ -10,6 +10,9 @@ monika@archlinux> python polytime.py --sleeps Alpha 05:30-07:00 Beta 12:00-12:20
 2018-07-114 | 02:28:20 Beta
 ```
 
+# Usage
+Type `python polytime -h` or `python polytime --help` for a description of currently available flags.
+
 # Basic concept
 
 People on monophasic sleep schedules have the convenient concept of a "day" and they sleep at the end of it, right? That way they get a proper sense of productivity relative to their wake time. With this in mind a friend of mine defined a concept of an "arc", which is the period between 2 sleeping episodes and thought of creating a program to replace day based clocks with arc based ones.
