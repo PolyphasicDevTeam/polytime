@@ -6,50 +6,75 @@ import json
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--sleeps', nargs='+',
-        help='Enter a series of time ranges (e.g. "--sleeps 01:30-02:00 3:00-4:25"). Optionally add names prior to any or all of the ranges to name them (e.g. "--sleeps Alpha 05:30-07:00 Beta 12:00-12:20 Gamma 16:00-16:20 Delta 22:00-01:00").')
-parser.add_argument('-dm', '--dateMultiplier', action='store_true', help="This replaces the days in the date with the number of arcs since the start of the month.")
+        help='Enter a series of time ranges (e.g. "--sleeps 01:30-02:00 03:00-04:25"). Optionally add names prior to any or all of the ranges to name them (e.g. "--sleeps Alpha 05:30-07:00 Beta 12:00-12:20 Gamma 16:00-16:20 Delta 22:00-01:00").')
+parser.add_argument('-dm', '--dateMultiplier', action='store_true', help='This replaces the days in the date with the number of arcs since the start of the month.')
 args = parser.parse_args()
 
 def loadConfig():
     try:
         with open('config') as f:
-            read_data = f.read()
-            print(read_data)
-    except FileNotFoundError:
-        print("Oops")
+            conf = json.loads(f.read())
+            return conf
+
+    except (FileNotFoundError, ValueError) as e:
         return 0
+
+def saveConfig(conf):
+    with open('config', 'w') as f:
+        f.write(json.dumps(conf, indent=4))
 
 # configurator for user input
 def configurator():
-    sleeps = []
-    pattern = re.compile("^\d{2}:\d{2}-\d{2}:\d{2}$")
+    # Loading the config
     conf = loadConfig()
     if conf == 0:
-        conf = json.loads('{"sleeps": [{"name": "", "start": 0, "end": 0}], "dateMultiplier": 0}')
+        conf = json.loads('{}')
 
-    print(json.dumps(conf, indent=4))
-
+    # Sleep time config
     if args.sleeps is not None:
+        pattern = re.compile('^\d{2}:\d{2}-\d{2}:\d{2}$')
         nameCache = ''
+        sleepCache = json.loads('{"sleeps": []}')
+
         for i in range(len(args.sleeps)):
             if re.search(pattern, args.sleeps[i]):
-                if nameCache == '':
-                    sleeps.append([''])
+                sleep = json.loads('{"name": "", "start": "", "end": ""}')
+                if nameCache != '':
+                    sleep['name'] = nameCache
 
-                else:
-                    sleeps.append([nameCache])
+                times = args.sleeps[i].replace('-', ' ').replace(':', '').split()
+                sleep['start'] = times[0]
+                sleep['end'] = times[1]
+                
+                sleepCache['sleeps'].append(sleep)
 
-                sleeps[len(sleeps) - 1].append(args.sleeps[i].replace('-', ' ').replace(':', ' ').split())
                 nameCache = ''
                 continue
 
             nameCache = args.sleeps[i]
-        args.sleeps = sleepTimes(sleeps)
-    else:
-        args.sleeps = ([['', 0, 0]])
 
-    print(conf)
-    #printTime(conf)
+        if sleepCache['sleeps'] != []:
+            conf['sleeps'] = sleepCache["sleeps"]
+
+        args.sleeps = None
+    elif 'sleeps' not in conf:
+        conf['sleeps'] = json.loads('[{"name": "", "start": "0000", "end": "0000"}]')
+
+    for sleep in conf['sleeps']:
+        pass
+        
+    # Date multiplier config
+    if 'dateMultiplier' not in conf:
+        conf['dateMultiplier'] = json.loads('0')
+
+    elif args.dateMultiplier is not False:
+        if conf['dateMultiplier'] == 0:
+            conf['dateMultiplier'] = 1
+        else:
+            conf['dateMultiplier'] = 0
+    
+    print(json.dumps(conf, indent=4))
+    saveConfig(conf)
 
 # conversion of sleep times to second based values and sorting
 def sleepTimes(input):
@@ -97,5 +122,4 @@ def printTime(sleepsIn):
 
     print('{0}-{1:02d}-{2} | {3:02d}:{4:02d}:{5:02d} {6}'.format(time.year, time.month, dateDays, time.hour, time.minute, dateSeconds, sleepsIn[currentArc][0]))
 
-if args.sleeps is not None:
-    configurator()
+configurator()
