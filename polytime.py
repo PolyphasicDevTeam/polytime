@@ -83,13 +83,16 @@ def configurator():
 
     # Convert human readable config to a useful config
     loadTime(conf)
-    print(json.dumps(conf, indent=4))
-    #runTime(conf, conf['dateMultiplier'])
+
+    # Run app
+    runTime(conf)
 
 # Load sleep times
 def loadTime(conf):
     # The solution here seems to be to have an alternate new imitation of conf['sleeps'], that then replaces conf['sleeps']
     newSleeps = json.loads('[]')
+    
+    conf['sleepCount'] = len(conf['sleeps'])
 
     for sleep in conf['sleeps']:
         newSleep = sleep.copy()
@@ -104,66 +107,31 @@ def loadTime(conf):
 
         newSleeps.append(newSleep)
 
-    conf['sleeps'] =  sorted(newSleeps, key=lambda tup: tup['start'])
+    conf['sleeps'] = sorted(newSleeps, key=lambda tup: tup['start'])
     return
 
-def runTime(timings, multiplier):
+def runTime(conf):
     now = datetime.datetime.now()
     midnight = now.replace(hour=0, minute=0, second=0)
     nowS = (now - midnight).total_seconds()
-    for time in range(len(timings)):
-        print('runtime:', timings[time][2], nowS, timings[time][2])
-        if nowS > timings[time][2] and nowS < timings[time + 1][2]:
-            time = (datetime.datetime.now() - datetime.timedelta(seconds=timings[time - 1][2]))
-            
 
+    GrcSleep = 0
+    for sleep in conf['sleeps']:
+        if nowS > sleep['end']:
+            arcSleep = sleep
+        else:
+            break
+    
+    time = (datetime.datetime.now() - datetime.timedelta(seconds=arcSleep['end']))
 
-            print('{0}-{1:02d}-{2} | {3:02d}:{4:02d}:{5:02d} {6}'.format(time.year, time.month, dateDays, time.hour, time.minute, dateSeconds, sleepsIn[currentArc][0]))
-        
-## conversion of sleep times to second based values and sorting
-#def sleepTimes(input):
-#    arcs = []
-#    for i in range(len(input)):
-#        start = (int(input[i][1][0])*3600)+(int(input[i][1][1])*60)
-#        end = (int(input[i][1][2])*3600)+(int(input[i][1][3])*60)
-#        arcs.append([input[i][0], start, end])
-#    arcs = sorted(arcs, key=lambda tup: tup[2])
-#    return arcs
-#
-## function to determine the current arc
-#def getArc(sleepsIn):
-#    now = datetime.datetime.now()
-#    midnight = now.replace(hour=0, minute=0, second=0)
-#    dayEnd = 86400
-#    nowS = (now - midnight).total_seconds()
-#    if nowS > 0 and nowS < sleepsIn[0][2]:
-#        return 1
-#
-#    if nowS < dayEnd and nowS > sleepsIn[-1][2]:
-#        return 0
-#
-#    for i in range(len(sleepsIn)):
-#        if nowS > sleepsIn[i-1][2] and nowS < sleepsIn[i][2]:
-#            return i
-#
-## print the current polytime, with date and arc name
-#def printTime(sleepsIn):
-#    currentArc = getArc(sleepsIn)
-#    time = (datetime.datetime.now() - datetime.timedelta(seconds=sleepsIn[currentArc - 1][2]))
-#
-#    dateDays = time.day
-#    if args.dateMultiplier is True:
-#        if currentArc > 0:
-#            dateDays = (time.day - 1) * len(sleepsIn) + currentArc
-#        else:
-#            dateDays = (time.day - 1) * len(sleepsIn) + len(sleepsIn)
-#
-#    dateSeconds = time.second
-#    if (dateSeconds % 10) < 5:
-#        dateSeconds = dateSeconds - (dateSeconds % 10)
-#    else:
-#        dateSeconds = dateSeconds - (dateSeconds % 10) + 5
-#
-#    print('{0}-{1:02d}-{2} | {3:02d}:{4:02d}:{5:02d} {6}'.format(time.year, time.month, dateDays, time.hour, time.minute, dateSeconds, sleepsIn[currentArc][0]))
-#
+    dateDays = time.day + conf['sleepCount'] * conf['dateMultiplier']
+
+    dateSeconds = time.second
+    if (dateSeconds % 10) < 5:
+        dateSeconds = dateSeconds - (dateSeconds % 10)
+    else:
+        dateSeconds = dateSeconds - (dateSeconds % 10) + 5
+
+    print('{0}-{1:02d}-{2} | {3:02d}:{4:02d}:{5:02d} {6}'.format(time.year, time.month, dateDays, time.hour, time.minute, dateSeconds, arcSleep['name']))
+
 configurator()
