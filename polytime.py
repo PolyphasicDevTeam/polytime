@@ -43,7 +43,7 @@ def configurator():
 
         for i in range(len(args.sleeps)):
             if re.search(pattern, args.sleeps[i]):
-                sleep = json.loads('{"name": "", "start": "", "end": ""}')
+                sleep = json.loads('{}')
                 if nameCache != '':
                     sleep['name'] = nameCache
 
@@ -92,7 +92,7 @@ def loadTime(conf):
     # The solution here seems to be to have an alternate new imitation of conf['sleeps'], that then replaces conf['sleeps']
     newSleeps = json.loads('[]')
     
-    conf['sleepCount'] = len(conf['sleeps'])
+    conf['sleepCount'] = 0
 
     for sleep in conf['sleeps']:
         newSleep = sleep.copy()
@@ -104,10 +104,17 @@ def loadTime(conf):
             newSleep['end'] += 86400
             newSleep2['start'] -= 86400
             newSleeps.append(newSleep2)
-
+        
+        conf['sleepCount'] += 1
         newSleeps.append(newSleep)
 
     conf['sleeps'] = sorted(newSleeps, key=lambda tup: tup['start'])
+
+    prevSleep = 0
+    for sleep in conf['sleeps']:
+        sleep['prevSleep'] = prevSleep
+        prevSleep = sleep['end']
+    print(json.dumps(conf['sleeps'], indent = 4))
     return
 
 def runTime(conf):
@@ -115,16 +122,18 @@ def runTime(conf):
     midnight = now.replace(hour=0, minute=0, second=0)
     nowS = (now - midnight).total_seconds()
 
-    GrcSleep = 0
-    for sleep in conf['sleeps']:
-        if nowS > sleep['end']:
-            arcSleep = sleep
-        else:
+    arcSleep = 0
+    for i in range(len(conf['sleeps'])):
+        print(conf['sleeps'][i]['prevSleep'], nowS, conf['sleeps'][i]['end'])
+        if nowS > conf['sleeps'][i]['prevSleep'] and nowS < conf['sleeps'][i]['end']:
+            arcSleep = i
             break
     
-    time = (datetime.datetime.now() - datetime.timedelta(seconds=arcSleep['end']))
+    time = (datetime.datetime.now() - datetime.timedelta(seconds=conf['sleeps'][arcSleep]['prevSleep']))
 
-    dateDays = time.day + conf['sleepCount'] * conf['dateMultiplier']
+    dateDays = time.day
+    if conf['dateMultiplier']:
+        dateDays = dateDays * conf['sleepCount'] + arcSleep
 
     dateSeconds = time.second
     if (dateSeconds % 10) < 5:
@@ -132,6 +141,6 @@ def runTime(conf):
     else:
         dateSeconds = dateSeconds - (dateSeconds % 10) + 5
 
-    print('{0}-{1:02d}-{2} | {3:02d}:{4:02d}:{5:02d} {6}'.format(time.year, time.month, dateDays, time.hour, time.minute, dateSeconds, arcSleep['name']))
+    print('{0}-{1:02d}-{2} | {3:02d}:{4:02d}:{5:02d} {6}'.format(time.year, time.month, dateDays, time.hour, time.minute, dateSeconds, conf['sleeps'][arcSleep]['name']))
 
 configurator()
