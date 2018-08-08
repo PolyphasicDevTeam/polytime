@@ -44,8 +44,7 @@ def configurator():
         for i in range(len(args.sleeps)):
             if re.search(pattern, args.sleeps[i]):
                 sleep = json.loads('{}')
-                if nameCache != '':
-                    sleep['name'] = nameCache
+                sleep['name'] = nameCache
 
                 times = args.sleeps[i].replace('-', ' ').replace(':', '').split()
                 sleep['start'] = times[0]
@@ -72,7 +71,7 @@ def configurator():
     if 'dateMultiplier' not in conf:
         conf['dateMultiplier'] = json.loads('0')
 
-    elif args.dateMultiplier is not False:
+    if args.dateMultiplier is not False:
         if conf['dateMultiplier'] == 0:
             conf['dateMultiplier'] = 1
         else:
@@ -114,7 +113,6 @@ def loadTime(conf):
     for sleep in conf['sleeps']:
         sleep['prevSleep'] = prevSleep
         prevSleep = sleep['end']
-    print(json.dumps(conf['sleeps'], indent = 4))
     return
 
 def runTime(conf):
@@ -124,7 +122,6 @@ def runTime(conf):
 
     arcSleep = 0
     for i in range(len(conf['sleeps'])):
-        print(conf['sleeps'][i]['prevSleep'], nowS, conf['sleeps'][i]['end'])
         if nowS > conf['sleeps'][i]['prevSleep'] and nowS < conf['sleeps'][i]['end']:
             arcSleep = i
             break
