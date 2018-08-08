@@ -6,7 +6,7 @@ import json
 
 def loadConfig():
     try:
-        with open('config') as f:
+        with open('polytimeConfig') as f:
             conf = json.loads(f.read())
             return conf
 
@@ -21,7 +21,7 @@ def loadArgs():
     return parser.parse_args()
 
 def saveConfig(conf):
-    with open('config', 'w') as f:
+    with open('polytimeConfig', 'w') as f:
         f.write(json.dumps(conf, indent=4))
 
 # configurator for user input
